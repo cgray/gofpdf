@@ -37,6 +37,7 @@ type TTFParser struct {
 	numberOfHMetrics uint
 	ascender         int
 	descender        int
+	baseline         uint16
 	//end Hhea
 
 	numGlyphs      uint
@@ -328,6 +329,10 @@ func (t *TTFParser) parse(rd io.Reader) error {
 		return err
 	}
 	err = t.ParseLoca(fd)
+	if err != nil {
+		return err
+	}
+	err = t.ParseBsln(fd)
 	if err != nil {
 		return err
 	}
@@ -954,6 +959,16 @@ func (t *TTFParser) ParseHhea(fd *bytes.Reader) error {
 	return nil
 }
 
+func (t *TTFParser) ParseBsln(fd *bytes.Reader) (err error) {
+	err = t.Seek(fd, "bsln")
+	if err != nil {
+		return err
+	}
+
+	t.baseline, err = t.ReadShortUInt16(fd)
+	return
+}
+
 //ParseMaxp parse maxp table  https://www.microsoft.com/typography/otspec/Maxp.htm
 func (t *TTFParser) ParseMaxp(fd *bytes.Reader) error {
 	err := t.Seek(fd, "maxp")
@@ -1027,6 +1042,15 @@ func (t *TTFParser) ReadShortInt16(fd *bytes.Reader) (int16, error) {
 		return 0, err
 	}
 	return int16(n), nil
+}
+
+//ReadShortUInt16 read short return int16
+func (t *TTFParser) ReadShortUInt16(fd *bytes.Reader) (uint16, error) {
+	n, err := t.ReadShort(fd)
+	if err != nil {
+		return 0, err
+	}
+	return uint16(n), nil
 }
 
 //ReadULong read ulong
