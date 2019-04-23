@@ -3,6 +3,7 @@ package gofpdf
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"image"
 	_ "image/jpeg"
@@ -43,6 +44,16 @@ func DeserializeImage(b []byte) (*ImageObj, error) {
 	return &i, err
 }
 
+func (i *ImageObj) SerializeJSON() ([]byte, error) {
+	return json.Marshal(i)
+}
+
+func DeserializeJSONImage(b []byte) (*ImageObj, error) {
+	var i ImageObj
+	err := json.Unmarshal(b, &i)
+	return &i, err
+}
+
 func (s *ImageObj) GobEncode() ([]byte, error) {
 	s.rawImgReader.Seek(0, 0)
 	b, err := ioutil.ReadAll(s.rawImgReader)
@@ -56,6 +67,26 @@ func (s *ImageObj) GobEncode() ([]byte, error) {
 func (s *ImageObj) GobDecode(buf []byte) error {
 	var b []byte
 	if err := geh.DecodeMany(buf, &b, &s.imginfo, &s.procsetid, &s.imageid); err != nil {
+		return err
+	}
+
+	s.rawImgReader = bytes.NewReader(b)
+	return nil
+}
+
+func (s *ImageObj) MarshalJSON() ([]byte, error) {
+	s.rawImgReader.Seek(0, 0)
+	b, err := ioutil.ReadAll(s.rawImgReader)
+	if err != nil {
+		return make([]byte, 0), err
+	}
+
+	return geh.EncodeManyJSON(b, s.imginfo, s.procsetid, s.imageid)
+}
+
+func (s *ImageObj) UnmarshalJSON(buf []byte) error {
+	var b []byte
+	if err := geh.DecodeManyJSON(buf, &b, &s.imginfo, &s.procsetid, &s.imageid); err != nil {
 		return err
 	}
 

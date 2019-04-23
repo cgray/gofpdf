@@ -20,6 +20,7 @@ package gofpdf
 import (
 	"crypto/sha1"
 	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -64,6 +65,16 @@ func (t *TemplateFont) GobDecode(buf []byte) error {
 	return geh.DecodeMany(buf, &t.subsetFont)
 }
 
+// MarshalJSON implements the Marshaler in the json package
+func (t *TemplateFont) MarshalJSON() ([]byte, error) {
+	return geh.EncodeManyJSON(t.subsetFont)
+}
+
+// UnmarshalJSON implements the Umarshaler in the json package
+func (t *TemplateFont) UnmarshalJSON(buf []byte) error {
+	return geh.DecodeManyJSON(buf, &t.subsetFont)
+}
+
 func NewTemplateImage(img *ImageObj) *TemplateImage {
 	return &TemplateImage{
 		image: img,
@@ -83,6 +94,16 @@ func (t *TemplateImage) GobEncode() ([]byte, error) {
 // GobDecode decodes the specified byte buffer into the receiving template.
 func (t *TemplateImage) GobDecode(buf []byte) error {
 	return geh.DecodeMany(buf, &t.image)
+}
+
+// MarshalJSON implements the Marshaler in the json package
+func (t *TemplateImage) MarshalJSON() ([]byte, error) {
+	return geh.EncodeManyJSON(t.image)
+}
+
+// UnmarshalJSON implements the Umarshaler in the json package
+func (t *TemplateImage) UnmarshalJSON(buf []byte) error {
+	return geh.DecodeManyJSON(buf, &t.image)
 }
 
 type TplFunc func(*Fpdf) error
@@ -244,6 +265,19 @@ func DeserializeTemplate(b []byte) (Template, error) {
 	return tpl, err
 }
 
+// Serialize turns a template into a byte string for later deserialization
+func (t *FpdfTpl) SerializeJSON() ([]byte, error) {
+	return json.Marshal(t)
+}
+
+// DeserializeTemplate creaties a template from a previously serialized
+// template
+func DeserializeJSONTemplate(b []byte) (Template, error) {
+	var tpl FpdfTpl
+	err := json.Unmarshal(b, &tpl)
+	return &tpl, err
+}
+
 // GobEncode encodes the receiving template into a byte buffer. Use GobDecode
 // to decode the byte buffer back to a template.
 func (t *FpdfTpl) GobEncode() ([]byte, error) {
@@ -255,6 +289,28 @@ func (t *FpdfTpl) GobDecode(buf []byte) error {
 	tpls := make([]*FpdfTpl, 0)
 
 	if err := geh.DecodeMany(buf, &tpls, &t.images, &t.fonts, &t.corner, &t.size, &t.bytes, &t.page); err != nil {
+		return err
+	}
+
+	t.templates = make([]Template, len(tpls))
+	for x := 0; x < len(t.templates); x++ {
+		t.templates[x] = Template(tpls[x])
+	}
+
+	return nil
+}
+
+// GobEncode encodes the receiving template into a byte buffer. Use GobDecode
+// to decode the byte buffer back to a template.
+func (t *FpdfTpl) MarshalJSON() ([]byte, error) {
+	return geh.EncodeManyJSON(t.templates, t.images, t.fonts, t.corner, t.size, t.bytes, t.page)
+}
+
+// GobDecode decodes the specified byte buffer into the receiving template.
+func (t *FpdfTpl) UnmarshalJSON(buf []byte) error {
+	tpls := make([]*FpdfTpl, 0)
+
+	if err := geh.DecodeManyJSON(buf, &tpls, &t.images, &t.fonts, &t.corner, &t.size, &t.bytes, &t.page); err != nil {
 		return err
 	}
 

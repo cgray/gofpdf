@@ -25,3 +25,11 @@ func (s imgInfo) GobEncode() ([]byte, error) {
 func (s *imgInfo) GobDecode(buf []byte) error {
 	return geh.DecodeMany(buf, &s.w, &s.h, &s.formatName, &s.colspace, &s.bitsPerComponent, &s.filter, &s.decodeParms, &s.trns, &s.smask, &s.pal, &s.data)
 }
+
+func (s imgInfo) MarshalJSON() ([]byte, error) {
+	return geh.EncodeManyJSON(s.w, s.h, s.formatName, s.colspace, s.bitsPerComponent, s.filter, s.decodeParms, s.trns, s.smask, s.pal, s.data)
+}
+
+func (s *imgInfo) UnmarshalJSON(buf []byte) error {
+	return geh.DecodeManyJSON(buf, &s.w, &s.h, &s.formatName, &s.colspace, &s.bitsPerComponent, &s.filter, &s.decodeParms, &s.trns, &s.smask, &s.pal, &s.data)
+}

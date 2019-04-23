@@ -98,6 +98,20 @@ func (t *TTFParser) GobDecode(buf []byte) error {
 	return geh.DecodeMany(buf, &t.tables, &t.unitsPerEm, &t.xMin, &t.yMin, &t.xMax, &t.yMax, &t.indexToLocFormat, &t.numberOfHMetrics, &t.ascender, &t.descender, &t.numGlyphs, &t.widths, &t.chars, &t.postScriptName, &t.os2Version, &t.Embeddable, &t.Bold, &t.typoAscender, &t.typoDescender, &t.capHeight, &t.sxHeight, &t.italicAngle, &t.underlinePosition, &t.underlineThickness, &t.isFixedPitch, &t.sTypoLineGap, &t.usWinAscent, &t.usWinDescent, &t.IsShortIndex, &t.LocaTable, &t.SegCount, &t.StartCount, &t.EndCount, &t.IdRangeOffset, &t.IdDelta, &t.GlyphIdArray, &t.symbol, &t.groupingTables, &t.cacheFontData, &t.useKerning, &t.kern)
 }
 
+func (t TTFParser) MarshalJSON() ([]byte, error) {
+	kt := t.kern
+	if kt == nil {
+		kt = new(KernTable)
+	}
+
+	return geh.EncodeManyJSON(t.tables, t.unitsPerEm, t.xMin, t.yMin, t.xMax, t.yMax, t.indexToLocFormat, t.numberOfHMetrics, t.ascender, t.descender, t.numGlyphs, t.widths, t.chars, t.postScriptName, t.os2Version, t.Embeddable, t.Bold, t.typoAscender, t.typoDescender, t.capHeight, t.sxHeight, t.italicAngle, t.underlinePosition, t.underlineThickness, t.isFixedPitch, t.sTypoLineGap, t.usWinAscent, t.usWinDescent, t.IsShortIndex, t.LocaTable, t.SegCount, t.StartCount, t.EndCount, t.IdRangeOffset, t.IdDelta, t.GlyphIdArray, t.symbol, t.groupingTables, t.cacheFontData, t.useKerning, kt)
+}
+
+// GobDecode decodes the specified byte buffer into the receiving template.
+func (t *TTFParser) UnmarshalJSON(buf []byte) error {
+	return geh.DecodeManyJSON(buf, &t.tables, &t.unitsPerEm, &t.xMin, &t.yMin, &t.xMax, &t.yMax, &t.indexToLocFormat, &t.numberOfHMetrics, &t.ascender, &t.descender, &t.numGlyphs, &t.widths, &t.chars, &t.postScriptName, &t.os2Version, &t.Embeddable, &t.Bold, &t.typoAscender, &t.typoDescender, &t.capHeight, &t.sxHeight, &t.italicAngle, &t.underlinePosition, &t.underlineThickness, &t.isFixedPitch, &t.sTypoLineGap, &t.usWinAscent, &t.usWinDescent, &t.IsShortIndex, &t.LocaTable, &t.SegCount, &t.StartCount, &t.EndCount, &t.IdRangeOffset, &t.IdDelta, &t.GlyphIdArray, &t.symbol, &t.groupingTables, &t.cacheFontData, &t.useKerning, &t.kern)
+}
+
 var Symbolic = 1 << 2
 var Nonsymbolic = (1 << 5)
 

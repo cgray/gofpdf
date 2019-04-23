@@ -19,6 +19,14 @@ func (s *MapOfCharacterToGlyphIndex) GobDecode(buf []byte) error {
 	return geh.DecodeMany(buf, &s.keyIndexs, &s.Keys, &s.Vals)
 }
 
+func (s *MapOfCharacterToGlyphIndex) MarshalJSON() ([]byte, error) {
+	return geh.EncodeManyJSON(s.keyIndexs, s.Keys, s.Vals)
+}
+
+func (s *MapOfCharacterToGlyphIndex) UnmarshalJSON(buf []byte) error {
+	return geh.DecodeManyJSON(buf, &s.keyIndexs, &s.Keys, &s.Vals)
+}
+
 func (gi *MapOfCharacterToGlyphIndex) copy() *MapOfCharacterToGlyphIndex {
 	gi2 := new(MapOfCharacterToGlyphIndex)
 	copy(gi2.Keys, gi.Keys)

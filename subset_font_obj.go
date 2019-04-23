@@ -3,6 +3,7 @@ package gofpdf
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -44,12 +45,30 @@ func DeserializeSubsetFont(b []byte) (*SubsetFontObj, error) {
 	return &sf, err
 }
 
+func (s *SubsetFontObj) SerializeJSON() ([]byte, error) {
+	return json.Marshal(s)
+}
+
+func DeserializeJSONSubsetFont(b []byte) (*SubsetFontObj, error) {
+	var sf SubsetFontObj
+	err := json.Unmarshal(b, &sf)
+	return &sf, err
+}
+
 func (s *SubsetFontObj) GobEncode() ([]byte, error) {
 	return geh.EncodeMany(s.ttfp, s.procsetid, s.Family, s.CharacterToGlyphIndex, s.ttfFontOption)
 }
 
 func (s *SubsetFontObj) GobDecode(buf []byte) error {
 	return geh.DecodeMany(buf, &s.ttfp, &s.procsetid, &s.Family, &s.CharacterToGlyphIndex, &s.ttfFontOption)
+}
+
+func (s *SubsetFontObj) MarshalJSON() ([]byte, error) {
+	return geh.EncodeManyJSON(s.ttfp, s.procsetid, s.Family, s.CharacterToGlyphIndex, s.ttfFontOption)
+}
+
+func (s *SubsetFontObj) UnmarshalJSON(buf []byte) error {
+	return geh.DecodeManyJSON(buf, &s.ttfp, &s.procsetid, &s.Family, &s.CharacterToGlyphIndex, &s.ttfFontOption)
 }
 
 func (s *SubsetFontObj) copy() *SubsetFontObj {

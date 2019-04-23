@@ -2,6 +2,7 @@ package geh
 
 import (
 	"encoding/gob"
+	"encoding/json"
 
 	"github.com/d1ngd0/gofpdf/bp"
 )
@@ -33,4 +34,13 @@ func DecodeMany(buf []byte, v ...interface{}) error {
 	}
 
 	return nil
+}
+
+func EncodeManyJSON(v ...interface{}) ([]byte, error) {
+	return json.Marshal(v)
+}
+
+// GobDecode decodes the specified byte buffer into the receiving template.
+func DecodeManyJSON(buf []byte, v ...interface{}) error {
+	return json.Unmarshal(buf, &v)
 }
