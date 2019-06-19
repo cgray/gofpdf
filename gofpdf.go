@@ -233,7 +233,7 @@ func (gp *Fpdf) Beziergon(pts Points, styleStr string) error {
 
 // Beziertext writes text along a path defined by a series of cubic Bézier
 // curve segments. Font size is reduced if the text exceeds avaiable arc length.
-func (gp *Fpdf) Beziertext(pts Points, startBracket, endBracket float64, text string, opt CellOption) error {
+func (gp *Fpdf) Beziertext(pts Points, startBracket, endBracket float64, text string, opt CellOption, textOpt TextOption) error {
 	points := pts.ToPoints(gp.curr.unit)
 
 	if len(points) < 4 {
@@ -338,7 +338,7 @@ func (gp *Fpdf) Beziertext(pts Points, startBracket, endBracket float64, text st
 		if err := gp.curr.Font_ISubset.AddChars(t); err != nil {
 			return err
 		}
-		if err = gp.currentContent().AppendStreamSubsetFont(rect, t, cellopt); err != nil {
+		if err = gp.currentContent().AppendStreamSubsetFont(rect, t, cellopt, textOpt); err != nil {
 			return err
 		}
 		gp.RotateReset()
@@ -1023,8 +1023,8 @@ func (gp *Fpdf) WriteTextf(h float64, txtStr string, v ...interface{}) error {
 }
 
 // WriteTextOptsf is the same as WriteText but it uses fmt.Sprintf
-func (gp *Fpdf) WriteTextOptsf(h float64, txtStr string, opts CellOption, v ...interface{}) error {
-	return gp.WriteTextOpts(h, fmt.Sprintf(txtStr, v...), opts)
+func (gp *Fpdf) WriteTextOptsf(h float64, txtStr string, opts CellOption, textOpts TextOption, v ...interface{}) error {
+	return gp.WriteTextOpts(h, fmt.Sprintf(txtStr, v...), opts, textOpts)
 }
 
 // WriteText prints text from the current position. When the right margin is
@@ -1047,8 +1047,8 @@ func (gp *Fpdf) WriteText(h float64, txtStr string) error {
 // It is possible to put a link on the text.
 //
 // h indicates the line height in the unit of measure specified in New().
-func (gp *Fpdf) WriteTextOpts(h float64, txtStr string, opts CellOption) error {
-	return gp.MultiCellOpts(0, h, txtStr, opts)
+func (gp *Fpdf) WriteTextOpts(h float64, txtStr string, opts CellOption, textOpts TextOption) error {
+	return gp.MultiCellOpts(0, h, txtStr, opts, textOpts)
 }
 
 // MultiCell supports printing text with line breaks. They can be automatic (as
@@ -1072,7 +1072,7 @@ func (gp *Fpdf) MultiCell(w, h float64, txtStr string) error {
 		Float:  Bottom,
 	}
 
-	return gp.MultiCellOpts(w, h, txtStr, defaultopt)
+	return gp.MultiCellOpts(w, h, txtStr, defaultopt, TextOption{})
 }
 
 // MultiCell supports printing text with line breaks. They can be automatic (as
@@ -1089,7 +1089,7 @@ func (gp *Fpdf) MultiCell(w, h float64, txtStr string) error {
 // the right margin.
 //
 // h indicates the line height of each cell in the unit of measure specified in New().
-func (gp *Fpdf) MultiCellOpts(w, h float64, txtStr string, opts CellOption) error {
+func (gp *Fpdf) MultiCellOpts(w, h float64, txtStr string, opts CellOption, textOpts TextOption) error {
 	gp.UnitsToPointsVar(&w, &h)
 	gp.curr.setLineHeight(h)
 
@@ -1114,7 +1114,7 @@ func (gp *Fpdf) MultiCellOpts(w, h float64, txtStr string, opts CellOption) erro
 			gp.addPageWithOption(page.pageOption)
 		}
 
-		err = gp.cellWithOption(rectangle, lines[x], opts)
+		err = gp.cellWithOption(rectangle, lines[x], opts, textOpts)
 
 		if err != nil {
 			return err
@@ -1187,20 +1187,20 @@ func (gp *Fpdf) cutStringBefore(txtStr string, w float64) (line string, left str
 }
 
 //CellWithOption create cell of text ( use current x,y is upper-left corner of cell)
-func (gp *Fpdf) CellWithOption(w, h float64, text string, opt CellOption) error {
+func (gp *Fpdf) CellWithOption(w, h float64, text string, opt CellOption, textOpts TextOption) error {
 	gp.UnitsToPointsVar(&w, &h)
 	rectangle := Rect{W: w, H: h}
 
-	return gp.cellWithOption(rectangle, text, opt)
+	return gp.cellWithOption(rectangle, text, opt, textOpts)
 }
 
-func (gp *Fpdf) cellWithOption(rect Rect, text string, opt CellOption) error {
+func (gp *Fpdf) cellWithOption(rect Rect, text string, opt CellOption, textOpts TextOption) error {
 	err := gp.curr.Font_ISubset.AddChars(text)
 	if err != nil {
 		return err
 	}
 
-	err = gp.currentContent().AppendStreamSubsetFont(rect, text, opt)
+	err = gp.currentContent().AppendStreamSubsetFont(rect, text, opt, textOpts)
 	return err
 }
 
@@ -1221,7 +1221,7 @@ func (gp *Fpdf) Cell(w, h float64, text string) error {
 		Float:  Right,
 	}
 
-	return gp.cellWithOption(rectangle, text, defaultopt)
+	return gp.cellWithOption(rectangle, text, defaultopt, TextOption{})
 }
 
 //AddLink
