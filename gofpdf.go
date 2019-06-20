@@ -259,7 +259,7 @@ func (gp *Fpdf) Beziertext(pts Points, startBracket, endBracket float64, text st
 	blength := endBracket - startBracket
 	var textwidth float64
 	for {
-		textwidth, err = gp.MeasureTextWidth(text)
+		textwidth, err = gp.MeasureTextWidth(text, textOpt)
 		if err != nil {
 			return err
 		}
@@ -283,7 +283,7 @@ func (gp *Fpdf) Beziertext(pts Points, startBracket, endBracket float64, text st
 	for _, c := range text {
 		srunes[i] = string(c)
 		x += srunes[i]
-		v, err := gp.MeasureTextWidth(x)
+		v, err := gp.MeasureTextWidth(x, textOpt)
 		if err != nil {
 			return err
 		}
@@ -1101,7 +1101,7 @@ func (gp *Fpdf) MultiCellOpts(w, h float64, txtStr string, opts CellOption, text
 		return errors.New("Cell has a zero or negative width, something is wrong")
 	}
 
-	lines, err := gp.splitLines(txtStr, w)
+	lines, err := gp.splitLines(txtStr, w, textOpts)
 	if err != nil {
 		return err
 	}
@@ -1132,7 +1132,7 @@ func (gp *Fpdf) bottomMarginHeight() float64 {
 	return gp.GetBoundaryHeight(PageBoundaryMedia) - gp.margins.Bottom
 }
 
-func (gp *Fpdf) splitLines(txt string, w float64) ([]string, error) {
+func (gp *Fpdf) splitLines(txt string, w float64, textOpts TextOption) ([]string, error) {
 	var final []string
 	nlb := strings.Split(txt, "\n")
 
@@ -1143,7 +1143,7 @@ func (gp *Fpdf) splitLines(txt string, w float64) ([]string, error) {
 			var line string
 			var err error
 
-			line, buffer, err = gp.cutStringBefore(buffer, w)
+			line, buffer, err = gp.cutStringBefore(buffer, w, textOpts)
 			if err != nil {
 				return final, err
 			}
@@ -1158,13 +1158,13 @@ func (gp *Fpdf) splitLines(txt string, w float64) ([]string, error) {
 	return final, nil
 }
 
-func (gp *Fpdf) cutStringBefore(txtStr string, w float64) (line string, left string, err error) {
+func (gp *Fpdf) cutStringBefore(txtStr string, w float64, textOpt TextOption) (line string, left string, err error) {
 	r := regexp.MustCompile("[^\\s]*\\s*")
 	words := r.FindAllString(txtStr, -1)
 
 	for y := 0; y < len(words); y++ {
 		var tw float64
-		tw, err = gp.measureTextWidth(fmt.Sprintf("%s%s", line, words[y]), Unit_PT)
+		tw, err = gp.measureTextWidth(fmt.Sprintf("%s%s", line, words[y]), Unit_PT, textOpt)
 
 		if err != nil {
 			return
@@ -1385,17 +1385,17 @@ func (gp *Fpdf) SetCMYKFillColor(c, m, y, k uint8) {
 }
 
 //MeasureTextWidth : measure Width of text (use current font)
-func (gp *Fpdf) MeasureTextWidth(text string) (float64, error) {
-	return gp.measureTextWidth(text, gp.curr.unit)
+func (gp *Fpdf) MeasureTextWidth(text string, textOpt TextOption) (float64, error) {
+	return gp.measureTextWidth(text, gp.curr.unit, textOpt)
 }
 
-func (gp *Fpdf) measureTextWidth(text string, units int) (float64, error) {
+func (gp *Fpdf) measureTextWidth(text string, units int, textOpt TextOption) (float64, error) {
 	err := gp.curr.Font_ISubset.AddChars(text) //AddChars for create CharacterToGlyphIndex
 	if err != nil {
 		return 0, err
 	}
 
-	_, _, textWidthPdfUnit, err := createContent(gp.curr.Font_ISubset, text, gp.curr.Font_Size, nil)
+	_, _, textWidthPdfUnit, err := createContent(gp.curr.Font_ISubset, text, gp.curr.Font_Size, nil, textOpt)
 	if err != nil {
 		return 0, err
 	}

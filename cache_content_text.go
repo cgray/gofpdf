@@ -254,7 +254,7 @@ func (c *cacheContentText) underline(w io.Writer, startX float64, startY float64
 
 func (c *cacheContentText) createContent() (float64, float64, error) {
 
-	cellWidthPdfUnit, cellHeightPdfUnit, textWidthPdfUnit, err := createContent(c.fontSubset, c.text, c.fontSize, c.rectangle)
+	cellWidthPdfUnit, cellHeightPdfUnit, textWidthPdfUnit, err := createContent(c.fontSubset, c.text, c.fontSize, c.rectangle, c.textOpt)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -264,13 +264,13 @@ func (c *cacheContentText) createContent() (float64, float64, error) {
 	return cellWidthPdfUnit, cellHeightPdfUnit, nil
 }
 
-func createContent(f *SubsetFontObj, text string, fontSize float64, rectangle *Rect) (float64, float64, float64, error) {
+func createContent(f *SubsetFontObj, text string, fontSize float64, rectangle *Rect, textOpt TextOption) (float64, float64, float64, error) {
 
 	unitsPerEm := int(f.ttfp.UnitsPerEm())
 	var leftRune rune
 	var leftRuneIndex uint
 	sumWidth := int(0)
-	//fmt.Printf("unitsPerEm = %d", unitsPerEm)
+
 	for i, r := range text {
 
 		glyphindex, err := f.CharIndex(r)
@@ -294,10 +294,13 @@ func createContent(f *SubsetFontObj, text string, fontSize float64, rectangle *R
 		leftRuneIndex = glyphindex
 	}
 
+	textWidthPdfUnit := (float64(sumWidth) * (fontSize / 1000.0)) + (float64(len(text)-1) * textOpt.CharacterSpacing)
+
 	cellWidthPdfUnit := float64(0)
 	cellHeightPdfUnit := float64(0)
+
 	if rectangle == nil {
-		cellWidthPdfUnit = float64(sumWidth) * (fontSize / 1000.0)
+		cellWidthPdfUnit = textWidthPdfUnit
 		typoAscender := convertTypoUnit(float64(f.ttfp.TypoAscender()), f.ttfp.UnitsPerEm(), fontSize)
 		typoDescender := convertTypoUnit(float64(f.ttfp.TypoDescender()), f.ttfp.UnitsPerEm(), fontSize)
 		cellHeightPdfUnit = typoAscender - typoDescender
@@ -305,7 +308,6 @@ func createContent(f *SubsetFontObj, text string, fontSize float64, rectangle *R
 		cellWidthPdfUnit = rectangle.W
 		cellHeightPdfUnit = rectangle.H
 	}
-	textWidthPdfUnit := float64(sumWidth) * (fontSize / 1000.0)
 	return cellWidthPdfUnit, cellHeightPdfUnit, textWidthPdfUnit, nil
 }
 
